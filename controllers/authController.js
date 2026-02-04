@@ -11,7 +11,11 @@ const generateToken = (userId) => {
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, profileImageUrl } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Please fill all fields" });
+    }
 
     const userExists = await User.findOne({ email });
 
@@ -27,6 +31,7 @@ export const registerUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      profileImageUrl,
     });
 
     if (user) {
