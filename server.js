@@ -2,7 +2,9 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
+
 import connectDb from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
@@ -16,17 +18,26 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(cors());
+// Ensure uploads folder exists
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// Middleware
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
+
 app.use(express.json());
 
-//db connection
+// DB
 connectDb()
-  .then(() => {
-    console.log("MongoDB connected successfully");
-  })
-  .catch((error) => {
-    console.error("MongoDB connection error:", error);
-  });
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error(err));
 
 // Routes
 app.use("/api/v1/auth", authRoutes);
@@ -34,9 +45,9 @@ app.use("/api/v1/income", incomeRoutes);
 app.use("/api/v1/expense", expenseRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 
-//server upload folder
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Static uploads
+app.use("/uploads", express.static(uploadDir));
 
 app.listen(process.env.PORT, () => {
-  console.log(`Server is running on :${process.env.PORT}`);
+  console.log(`Server running on ${process.env.PORT}`);
 });
