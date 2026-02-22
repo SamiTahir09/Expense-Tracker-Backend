@@ -38,7 +38,7 @@ export const getDashboardData = async (req, res) => {
 
     // Last 30 Days Expense
     const last30daysExpenseTransactions = await ExpenseModel.find({
-      user: userObjectId,
+      userId: userObjectId,
       date: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
     }).sort({ date: -1 });
 
@@ -50,13 +50,13 @@ export const getDashboardData = async (req, res) => {
     // Recent Transactions (Income + Expense)
     const lastTransactions = [
       ...(
-        await Income.find({ user: userObjectId }).sort({ date: -1 }).limit(5)
+        await Income.find({ userId: userObjectId }).sort({ date: -1 }).limit(5)
       ).map((transaction) => ({
         ...transaction.toObject(),
         type: "income",
       })),
       ...(
-        await ExpenseModel.find({ user: userObjectId })
+        await ExpenseModel.find({ userId: userObjectId })
           .sort({ date: -1 })
           .limit(5)
       ).map((transaction) => ({

@@ -45,10 +45,13 @@ export const getAllincome = async (req, res) => {
 // Delete Income
 export const deleteincome = async (req, res) => {
   try {
-    const income = await Income.findOneAndDelete(req.params.id);
+    // Use findByIdAndDelete for simplicity
+    const income = await Income.findByIdAndDelete(req.params.id);
+
     if (!income) {
       return res.status(404).json({ message: "Income not found" });
     }
+
     res.json({ message: "Income deleted successfully" });
   } catch (error) {
     res
