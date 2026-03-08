@@ -66,7 +66,6 @@ export const downloadincomeExcel = async (req, res) => {
   try {
     const income = await Income.find({ userId }).sort({ date: -1 });
 
-    //prepare data for excel
     const excelData = income.map((item) => ({
       Source: item.source,
       Amount: item.amount,
@@ -75,15 +74,29 @@ export const downloadincomeExcel = async (req, res) => {
 
     const wb = xlsx.utils.book_new();
     const ws = xlsx.utils.json_to_sheet(excelData);
+
     xlsx.utils.book_append_sheet(wb, ws, "Income");
-    xlsx.writeFile(wb, "Income_Detail.xlsx");
 
-    res.download("Income_Detail.xlsx");
+    const buffer = xlsx.write(wb, {
+      type: "buffer",
+      bookType: "xlsx",
+    });
 
-    res.json(excelData);
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=Income_Detail.xlsx",
+    );
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+
+    res.send(buffer);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error downloading income data", error: error.message });
+    res.status(500).json({
+      message: "Error downloading income data",
+      error: error.message,
+    });
   }
 };

@@ -42,10 +42,9 @@ export const downloadExpensesExcel = async (req, res) => {
   const userId = req.user.id;
 
   try {
-    const expense = await ExpenseModel.find({ userId }).sort({ date: -1 });
+    const expenses = await ExpenseModel.find({ userId }).sort({ date: -1 });
 
-    //prepare data for excel
-    const excelData = expense.map((item) => ({
+    const excelData = expenses.map((item) => ({
       Source: item.category,
       Amount: item.amount,
       Date: item.date.toISOString().split("T")[0],
@@ -53,12 +52,25 @@ export const downloadExpensesExcel = async (req, res) => {
 
     const wb = xlsx.utils.book_new();
     const ws = xlsx.utils.json_to_sheet(excelData);
+
     xlsx.utils.book_append_sheet(wb, ws, "Expenses");
-    xlsx.writeFile(wb, "Expenses_Detail.xlsx");
 
-    res.download("Expenses_Detail.xlsx");
+    const buffer = xlsx.write(wb, {
+      type: "buffer",
+      bookType: "xlsx",
+    });
 
-    res.json(excelData);
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=Expenses_Detail.xlsx",
+    );
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+
+    res.send(buffer);
   } catch (error) {
     res.status(500).json({
       message: "Error downloading expenses data",
@@ -69,14 +81,17 @@ export const downloadExpensesExcel = async (req, res) => {
 // Delete Expense
 export const deleteExpense = async (req, res) => {
   try {
-    const expense = await ExpenseModel.findOneAndDelete(req.params.id);
+    const expense = await ExpenseModel.findByIdAndDelete(req.params.id);
+
     if (!expense) {
       return res.status(404).json({ message: "Expense not found" });
     }
+
     res.json({ message: "Expense deleted successfully" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error deleting expense", error: error.message });
+    res.status(500).json({
+      message: "Error deleting expense",
+      error: error.message,
+    });
   }
 };
